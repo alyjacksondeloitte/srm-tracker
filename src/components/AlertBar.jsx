@@ -26,8 +26,7 @@ export function computeAlerts(tasks) {
     t.status !== 'complete' &&
     !tasks.some(r => r.isReview && r.parentId === t.id)
   );
-  if (noReview.length)
-    alerts.push({ type: 'info', msg: `${noReview.length} deliverable${noReview.length > 1 ? 's' : ''} missing a review chain`, tasks: noReview });
+  // review chain alert removed
 
   return alerts;
 }

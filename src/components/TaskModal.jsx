@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { WS, TEAM, REVIEWERS } from '../constants.js';
+import { WS, WS_LOA14, TEAM, REVIEWERS } from '../constants.js';
+
+const ALL_WS = [
+  { label: 'LOA 12', options: WS },
+  { label: 'LOA 14', options: WS_LOA14 },
+];
 import { uid, fmtShort, pd } from '../utils.js';
 import { addWeekdays, buildReviewTasks, buildSubtasks } from '../reviewChain.js';
 
@@ -200,7 +205,11 @@ export default function TaskModal({ open, editId, tasks, defaultWsId, onSave, on
         <div className="fg">
           <label>Workstream</label>
           <select className="fi" value={form.ws} onChange={e => setForm(f => ({ ...f, ws: e.target.value }))}>
-            {WS.map(w => <option key={w.id} value={w.id}>{w.label}</option>)}
+            {ALL_WS.map(group => (
+              <optgroup key={group.label} label={group.label}>
+                {group.options.map(w => <option key={w.id} value={w.id}>{w.label}</option>)}
+              </optgroup>
+            ))}
           </select>
         </div>
 

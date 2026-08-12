@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { WS, GCOLS } from '../constants.js';
+import { WS, WS_LOA14, GCOLS_LOA12, GCOLS_LOA14 } from '../constants.js';
 import { todayDate } from '../utils.js';
 import DrillPanel from './DrillPanel.jsx';
 
-function loadOrder(workstreams) {
+const LOA12_CUTOFF = '2026-08-17'; // tasks before this date belong to LOA 12
+
+function loadOrder(workstreams, storageKey) {
   try {
-    const saved = JSON.parse(localStorage.getItem('gantt-ws-order') || 'null');
+    const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
     if (Array.isArray(saved) && saved.length) {
       const byId = Object.fromEntries(workstreams.map(w => [w.id, w]));
       const ordered = saved.map(id => byId[id]).filter(Boolean);
@@ -17,9 +19,21 @@ function loadOrder(workstreams) {
 }
 
 export default function GanttView({ tasks, workstreams: wsProp, onInline, onUpsertTasks, onDeleteTask, onOpenAdd, onOpenEdit, onOpenWsModal, onUpdateWs }) {
-  const source = wsProp?.length ? wsProp : WS;
-  const [wsOrder, setWsOrder] = useState(() => loadOrder(source));
+  const [loa, setLoa] = useState('loa14');
+  const ws12Source = wsProp?.length ? wsProp : WS;
+  const [wsOrder12, setWsOrder12] = useState(() => loadOrder(ws12Source, 'gantt-ws-order-loa12'));
+  const [wsOrder14, setWsOrder14] = useState(() => loadOrder(WS_LOA14, 'gantt-ws-order-loa14'));
   const [selWs, setSelWs] = useState(null);
+
+  const isLoa12 = loa === 'loa12';
+  const GCOLS   = isLoa12 ? GCOLS_LOA12 : GCOLS_LOA14;
+  const wsOrder = isLoa12 ? wsOrder12 : wsOrder14;
+  const setWsOrder = isLoa12 ? setWsOrder12 : setWsOrder14;
+  const storageKey = isLoa12 ? 'gantt-ws-order-loa12' : 'gantt-ws-order-loa14';
+
+  const loaTasks = isLoa12
+    ? tasks.filter(t => t.due && t.due < LOA12_CUTOFF)
+    : tasks.filter(t => !t.due || t.due >= LOA12_CUTOFF);
 
   function moveWs(id, dir) {
     setWsOrder(prev => {
@@ -28,13 +42,14 @@ export default function GanttView({ tasks, workstreams: wsProp, onInline, onUpse
       if (next < 0 || next >= prev.length) return prev;
       const arr = [...prev];
       [arr[idx], arr[next]] = [arr[next], arr[idx]];
-      localStorage.setItem('gantt-ws-order', JSON.stringify(arr.map(w => w.id)));
+      localStorage.setItem(storageKey, JSON.stringify(arr.map(w => w.id)));
       return arr;
     });
   }
 
   const allWeeks = [];
-  GCOLS.forEach(m => m.weeks.forEach(w => allWeeks.push({ ...w, m: m.m })));
+  GCOLS.forEach(m => m.weeks.forEach(w => allWeeks.push({ ...w, month: m.m })));
+  const lastWeekD = allWeeks[allWeeks.length - 1]?.d ?? '2099-01-01';
   const todayStr = todayDate().toISOString().split('T')[0];
 
   function clickWs(wsId) {
@@ -43,6 +58,23 @@ export default function GanttView({ tasks, workstreams: wsProp, onInline, onUpse
 
   return (
     <div>
+      {/* LOA Tab Switcher */}
+      <div style={{ display:'flex', gap:8, padding:'10px 16px 0', borderBottom:'2px solid var(--border)' }}>
+        {[['loa12','LOA 12  (Mar – Aug 14)'],['loa14','LOA 14  (Aug 17 – Jan 27)']].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => { setLoa(key); setSelWs(null); }}
+            style={{
+              padding:'6px 18px', borderRadius:'6px 6px 0 0', border:'none', cursor:'pointer', fontWeight:600, fontSize:13,
+              background: loa === key ? 'var(--swp-blue)' : 'var(--surface)',
+              color: loa === key ? '#fff' : 'var(--text-muted)',
+              borderBottom: loa === key ? '2px solid var(--swp-blue)' : '2px solid transparent',
+              marginBottom: -2,
+            }}
+          >{label}</button>
+        ))}
+      </div>
+
       {/* Legend */}
       <div className="legend-bar">
         <div className="leg"><div className="leg-diamond" style={{ background: 'var(--swp-blue)' }} />Internal Review</div>
@@ -57,9 +89,11 @@ export default function GanttView({ tasks, workstreams: wsProp, onInline, onUpse
           Today: {todayDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </span>
         <span className="hint">Click a row to see tasks &amp; drill down</span>
-        <button className="btn-ghost" style={{ marginLeft: 'auto' }} onClick={onOpenWsModal}>
-          + Add Workstream
-        </button>
+        {isLoa12 && (
+          <button className="btn-ghost" style={{ marginLeft: 'auto' }} onClick={onOpenWsModal}>
+            + Add Workstream
+          </button>
+        )}
       </div>
 
       {/* Gantt table */}
@@ -78,7 +112,7 @@ export default function GanttView({ tasks, workstreams: wsProp, onInline, onUpse
           </thead>
           <tbody>
             {wsOrder.map((ws, wi) => {
-              const wt = tasks.filter(t => t.ws === ws.id);
+              const wt = loaTasks.filter(t => t.ws === ws.id);
               const isSel = selWs === ws.id;
               const dueDates = wt.filter(t => t.due).map(t => t.due).sort();
               const wsFirst = dueDates[0];
@@ -116,7 +150,7 @@ export default function GanttView({ tasks, workstreams: wsProp, onInline, onUpse
                           onClick={e => e.stopPropagation()}
                           onBlur={e => {
                             const val = e.target.value.trim();
-                            if (val && val !== ws.label) onUpdateWs(ws.id, val);
+                            if (val && val !== ws.label && isLoa12) onUpdateWs(ws.id, val);
                             else e.target.value = ws.label;
                           }}
                           onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') { e.target.value = ws.label; e.target.blur(); } }}
@@ -127,7 +161,7 @@ export default function GanttView({ tasks, workstreams: wsProp, onInline, onUpse
                   </td>
 
                   {allWeeks.map((w, wi) => {
-                    const nextD = wi < allWeeks.length - 1 ? allWeeks[wi + 1].d : '2026-09-01';
+                    const nextD = wi < allWeeks.length - 1 ? allWeeks[wi + 1].d : '2027-02-01';
                     const isToday = w.d <= todayStr && todayStr < nextD;
                     const colTasks = wt.filter(t =>
                       t.due && t.due >= w.d && t.due < nextD && !t.isSubtask
@@ -155,7 +189,7 @@ export default function GanttView({ tasks, workstreams: wsProp, onInline, onUpse
       {selWs && (
         <DrillPanel
           wsId={selWs}
-          tasks={tasks}
+          tasks={loaTasks}
           onClose={() => setSelWs(null)}
           onInline={onInline}
           onUpsertTasks={onUpsertTasks}
@@ -169,7 +203,6 @@ export default function GanttView({ tasks, workstreams: wsProp, onInline, onUpse
 }
 
 function Diamond({ task: t }) {
-  const safe = (t.name || '').replace(/"/g, '&quot;');
   if (t.type === 'task') return null;
   if (t.type === 'milestone-finalize') {
     return <div className="mdiamond" style={{ background: 'white', border: '3px solid var(--finalize-orange)' }} title={t.name} />;
@@ -180,6 +213,5 @@ function Diamond({ task: t }) {
   if (t.type === 'meeting') {
     return <div className="mdiamond" style={{ background: 'var(--srmc-yellow)' }} title={t.name} />;
   }
-  // swp-session + anything else
   return <div className="mdiamond" style={{ background: 'var(--swp-blue)' }} title={t.name} />;
 }

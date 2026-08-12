@@ -12,6 +12,20 @@ export const WS = [
   { id:'adhoc',       label:'Ad Hoc',                       color:'#9E9E9E' },
 ];
 
+export const WS_LOA14 = [
+  { id:'loa14-srm-materials',   label:'SRM Services Materials',                          color:'#86BC25' },
+  { id:'loa14-kri-kpi',         label:'KRIs and KPIs',                                   color:'#00A3E0' },
+  { id:'loa14-console',         label:'Risk and Initiative Console',                      color:'#7B68EE' },
+  { id:'loa14-alignment',       label:'Support Program Alignment Framework',              color:'#FB8C00' },
+  { id:'loa14-assumptions',     label:'Assumptions Testing',                              color:'var(--due-priority)' },
+  { id:'loa14-playbook',        label:'Updated Playbook Chapters',                        color:'#26C6DA' },
+  { id:'loa14-reporting',       label:'Updated 2026 Risk Reporting Template and Tear Sheets', color:'#78909C' },
+  { id:'loa14-trends',          label:'2027 External Trends Report',                      color:'#66BB6A' },
+  { id:'loa14-pov',             label:'Risk POV',                                         color:'#EF5350' },
+  { id:'loa14-council',         label:'Monthly SRM Council Meeting Materials',            color:'#AB47BC' },
+  { id:'loa14-adhoc',          label:'Ad Hoc',                                           color:'#9E9E9E' },
+];
+
 export const TEAM = ['Alyssa','Asma','Stewart','Sam','Bridget','Lily','Alex','Dmitriy'];
 
 export const REVIEWERS = ['Alyssa','Asma','Dmitriy','Stewart','You Chen'];
@@ -25,7 +39,8 @@ export const STATUS = {
 };
 
 // Gantt columns: each month has an array of week anchor dates
-export const GCOLS = [
+// LOA 12: March – Aug 14, 2026 (last column is week of 8/10)
+export const GCOLS_LOA12 = [
   { m:'Mar',  weeks:[{ lbl:'3/2',  d:'2026-03-02' }] },
   { m:'Apr',  weeks:[{ lbl:'4/6',  d:'2026-04-06' }] },
   { m:'May',  weeks:[
@@ -50,9 +65,51 @@ export const GCOLS = [
   { m:'Aug',  weeks:[
     { lbl:'8/3',  d:'2026-08-03' },
     { lbl:'8/10', d:'2026-08-10' },
-    { lbl:'8/17', d:'2026-08-17' },
   ]},
 ];
+
+// LOA 14: Aug 17, 2026 – Jan 2027
+export const GCOLS_LOA14 = [
+  { m:'Aug',  weeks:[
+    { lbl:'8/17', d:'2026-08-17' },
+    { lbl:'8/24', d:'2026-08-24' },
+    { lbl:'8/31', d:'2026-08-31' },
+  ]},
+  { m:'Sep',  weeks:[
+    { lbl:'9/7',  d:'2026-09-07' },
+    { lbl:'9/14', d:'2026-09-14' },
+    { lbl:'9/21', d:'2026-09-21' },
+    { lbl:'9/28', d:'2026-09-28' },
+  ]},
+  { m:'Oct',  weeks:[
+    { lbl:'10/5',  d:'2026-10-05' },
+    { lbl:'10/12', d:'2026-10-12' },
+    { lbl:'10/19', d:'2026-10-19' },
+    { lbl:'10/26', d:'2026-10-26' },
+  ]},
+  { m:'Nov',  weeks:[
+    { lbl:'11/2',  d:'2026-11-02' },
+    { lbl:'11/9',  d:'2026-11-09' },
+    { lbl:'11/16', d:'2026-11-16' },
+    { lbl:'11/23', d:'2026-11-23' },
+    { lbl:'11/30', d:'2026-11-30' },
+  ]},
+  { m:'Dec',  weeks:[
+    { lbl:'12/7',  d:'2026-12-07' },
+    { lbl:'12/14', d:'2026-12-14' },
+    { lbl:'12/21', d:'2026-12-21' },
+    { lbl:'12/28', d:'2026-12-28' },
+  ]},
+  { m:'Jan',  weeks:[
+    { lbl:'1/4',  d:'2027-01-04' },
+    { lbl:'1/11', d:'2027-01-11' },
+    { lbl:'1/18', d:'2027-01-18' },
+    { lbl:'1/25', d:'2027-01-25' },
+  ]},
+];
+
+// Default export for backwards compatibility
+export const GCOLS = GCOLS_LOA12;
 
 export const DEFAULTS = [
   // ── Annual Risk Refresh ──────────────────────────────────────────────────
