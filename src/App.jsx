@@ -2,7 +2,9 @@ import React, { useState, useCallback } from 'react';
 import { useTasks } from './hooks/useTasks.js';
 import { usePTO } from './hooks/usePTO.js';
 import { uid } from './utils.js';
-import { WS as INITIAL_WS } from './constants.js';
+import { WS as INITIAL_WS, WS_LOA14 } from './constants.js';
+
+const ALL_WS_MAP = Object.fromEntries([...INITIAL_WS, ...WS_LOA14].map(w => [w.id, w.label]));
 import GanttView from './components/GanttView.jsx';
 import DailyView from './components/DailyView.jsx';
 import CalendarView from './components/CalendarView.jsx';
@@ -94,6 +96,70 @@ export default function App() {
     });
   }
 
+  // ── Export / Import ───────────────────────────────────────────
+  function handleExport() {
+    const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `srm-tasks-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleExportCSV() {
+    const STATUS_LABELS = { 'not-started':'Not Started', 'in-progress':'In Progress', 'in-review':'In Review', 'complete':'Complete', 'blocked':'Blocked' };
+    const TYPE_LABELS   = { 'task':'Task', 'meeting':'SWP Meeting', 'swp-session':'Internal Review', 'milestone-key':'Internal Working Session', 'milestone-finalize':'Finalize Deliverable' };
+
+    const headers = ['Workstream','Task Name','Notes','Start Date','Due Date','Owner','Status','Type','Priority'];
+    const rows = tasks
+      .filter(t => !t.isReview && !t.isSubtask)
+      .map(t => [
+        ALL_WS_MAP[t.ws] || t.ws,
+        t.name || '',
+        (t.notes || '').replace(/,/g, ';'),
+        t.startDate || '',
+        t.due || '',
+        t.owner || '',
+        STATUS_LABELS[t.status] || t.status || '',
+        TYPE_LABELS[t.type] || t.type || '',
+        t.priority ? 'Yes' : 'No',
+      ]);
+
+    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `srm-tasks-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleImport() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const imported = JSON.parse(text);
+        if (!Array.isArray(imported)) { alert('Invalid file — expected a JSON array of tasks.'); return; }
+        await fetch('/api/tasks/replace', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(imported),
+        });
+        window.location.reload();
+      } catch (err) {
+        alert('Import failed: ' + err.message);
+      }
+    };
+    input.click();
+  }
+
   // ── AI action handler ──────────────────────────────────────────
   const handleAIChanges = useCallback(async (action) => {
     if (!action) return;
@@ -137,15 +203,14 @@ export default function App() {
     <>
       {/* ── Header ── */}
       <div className="header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div className="logo" />
-          <div>
-            <div className="header-title">SRM Project Tracker</div>
-            <div className="header-sub">DWR / State Water Project &nbsp;·&nbsp; Feb – Aug 2026</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="logo" />
+            <div>
+              <div className="header-title">SRM Project Tracker</div>
+              <div className="header-sub">DWR / State Water Project &nbsp;·&nbsp; Feb – Aug 2026</div>
+            </div>
           </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span className={`sync${syncOk ? ' ok' : ''}`}>{syncStatus}</span>
           <div className="tabs">
             {VIEWS.map(v => (
               <button key={v} className={`tab${activeView === v ? ' active' : ''}`} onClick={() => setActiveView(v)}>
@@ -153,6 +218,12 @@ export default function App() {
               </button>
             ))}
           </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button className="btn-ghost" style={{ fontSize: 12, color: '#a8c8f0', borderColor: '#a8c8f0' }} onClick={handleExportCSV} title="Download tasks as spreadsheet">⬇ Spreadsheet</button>
+          <button className="btn-ghost" style={{ fontSize: 12, color: '#a8c8f0', borderColor: '#a8c8f0' }} onClick={handleExport} title="Download tasks as JSON">⬇ JSON</button>
+          <button className="btn-ghost" style={{ fontSize: 12, color: '#a8c8f0', borderColor: '#a8c8f0' }} onClick={handleImport} title="Upload tasks from JSON">⬆ Import</button>
+          <span className={`sync${syncOk ? ' ok' : ''}`}>{syncStatus}</span>
         </div>
       </div>
 

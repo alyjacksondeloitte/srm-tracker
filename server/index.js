@@ -31,6 +31,14 @@ app.post('/api/tasks', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.post('/api/tasks/replace', async (req, res) => {
+  try {
+    const tasks = Array.isArray(req.body) ? req.body : [];
+    await saveTasks(tasks);
+    res.json({ ok: true, count: tasks.length });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.delete('/api/tasks', async (req, res) => {
   try {
     const { id, ids } = req.body;
