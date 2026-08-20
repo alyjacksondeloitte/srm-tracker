@@ -18,18 +18,27 @@ function loadOrder(workstreams, storageKey) {
   return workstreams;
 }
 
-export default function GanttView({ tasks, workstreams: wsProp, onInline, onUpsertTasks, onDeleteTask, onOpenAdd, onOpenEdit, onOpenWsModal, onUpdateWs }) {
+export default function GanttView({ tasks, workstreams: wsProp, workstreamsLoa14: wsPropLoa14, onInline, onUpsertTasks, onDeleteTask, onOpenAdd, onOpenEdit, onOpenWsModal, onUpdateWs, onOpenWsModalLoa14, onUpdateWsLoa14 }) {
   const [loa, setLoa] = useState('loa14');
   const ws12Source = wsProp?.length ? wsProp : WS;
+  const ws14Source = wsPropLoa14?.length ? wsPropLoa14 : WS_LOA14;
   const [wsOrder12, setWsOrder12] = useState(() => loadOrder(ws12Source, 'gantt-ws-order-loa12'));
-  const [wsOrder14, setWsOrder14] = useState(() => loadOrder(WS_LOA14, 'gantt-ws-order-loa14'));
+  const [wsOrder14, setWsOrder14] = useState(() => loadOrder(ws14Source, 'gantt-ws-order-loa14'));
   const [selWs, setSelWs] = useState(null);
 
   const isLoa12 = loa === 'loa12';
   const GCOLS   = isLoa12 ? GCOLS_LOA12 : GCOLS_LOA14;
-  const wsOrder = isLoa12 ? wsOrder12 : wsOrder14;
-  const setWsOrder = isLoa12 ? setWsOrder12 : setWsOrder14;
   const storageKey = isLoa12 ? 'gantt-ws-order-loa12' : 'gantt-ws-order-loa14';
+
+  // Merge any newly added workstreams into the ordered list
+  const wsOrder = isLoa12
+    ? wsOrder12
+    : (() => {
+        const known = new Set(wsOrder14.map(w => w.id));
+        const unseen = ws14Source.filter(w => !known.has(w.id));
+        return unseen.length ? [...wsOrder14, ...unseen] : wsOrder14;
+      })();
+  const setWsOrder = isLoa12 ? setWsOrder12 : setWsOrder14;
 
   const loaTasks = isLoa12
     ? tasks.filter(t => t.due && t.due < LOA12_CUTOFF)
@@ -89,11 +98,13 @@ export default function GanttView({ tasks, workstreams: wsProp, onInline, onUpse
           Today: {todayDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </span>
         <span className="hint">Click a row to see tasks &amp; drill down</span>
-        {isLoa12 && (
-          <button className="btn-ghost" style={{ marginLeft: 'auto' }} onClick={onOpenWsModal}>
-            + Add Workstream
-          </button>
-        )}
+        <button
+          className="btn-ghost"
+          style={{ marginLeft: 'auto' }}
+          onClick={isLoa12 ? onOpenWsModal : onOpenWsModalLoa14}
+        >
+          + Add Workstream
+        </button>
       </div>
 
       {/* Gantt table */}
@@ -150,8 +161,10 @@ export default function GanttView({ tasks, workstreams: wsProp, onInline, onUpse
                           onClick={e => e.stopPropagation()}
                           onBlur={e => {
                             const val = e.target.value.trim();
-                            if (val && val !== ws.label && isLoa12) onUpdateWs(ws.id, val);
-                            else e.target.value = ws.label;
+                            if (val && val !== ws.label) {
+                              if (isLoa12) onUpdateWs(ws.id, val);
+                              else if (onUpdateWsLoa14) onUpdateWsLoa14(ws.id, val);
+                            } else e.target.value = ws.label;
                           }}
                           onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') { e.target.value = ws.label; e.target.blur(); } }}
                         />

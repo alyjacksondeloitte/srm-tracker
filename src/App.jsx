@@ -2,9 +2,9 @@ import React, { useState, useCallback } from 'react';
 import { useTasks } from './hooks/useTasks.js';
 import { usePTO } from './hooks/usePTO.js';
 import { uid } from './utils.js';
-import { WS as INITIAL_WS, WS_LOA14 } from './constants.js';
+import { WS as INITIAL_WS, WS_LOA14 as INITIAL_WS_LOA14 } from './constants.js';
 
-const ALL_WS_MAP = Object.fromEntries([...INITIAL_WS, ...WS_LOA14].map(w => [w.id, w.label]));
+const ALL_WS_MAP = Object.fromEntries([...INITIAL_WS, ...INITIAL_WS_LOA14].map(w => [w.id, w.label]));
 import GanttView from './components/GanttView.jsx';
 import DailyView from './components/DailyView.jsx';
 import CalendarView from './components/CalendarView.jsx';
@@ -43,11 +43,25 @@ export default function App() {
     return INITIAL_WS;
   });
 
+  const [workstreamsLoa14, setWorkstreamsLoa14] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('workstreams-loa14') || 'null');
+      if (Array.isArray(saved) && saved.length) {
+        const savedMap = Object.fromEntries(saved.map(w => [w.id, w]));
+        const merged = INITIAL_WS_LOA14.map(w => savedMap[w.id] ? { ...w, label: savedMap[w.id].label } : w);
+        const extra = saved.filter(w => !INITIAL_WS_LOA14.find(i => i.id === w.id));
+        return [...merged, ...extra];
+      }
+    } catch {}
+    return INITIAL_WS_LOA14;
+  });
+
   // Modal state
   const [modalOpen, setModalOpen]           = useState(false);
   const [modalEditId, setModalEditId]       = useState(null);
   const [modalDefaultWs, setModalDefaultWs] = useState(null);
   const [wsModalOpen, setWsModalOpen]       = useState(false);
+  const [wsModalLoa14Open, setWsModalLoa14Open] = useState(false);
   const [aiPanelOpen, setAiPanelOpen]       = useState(false);
 
   // ── Inline field edit ──────────────────────────────────────────
@@ -92,6 +106,22 @@ export default function App() {
     setWorkstreams(prev => {
       const next = prev.map(w => w.id === id ? { ...w, label } : w);
       localStorage.setItem('workstreams', JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function handleSaveWsLoa14(ws) {
+    setWorkstreamsLoa14(prev => {
+      const next = [...prev, ws];
+      localStorage.setItem('workstreams-loa14', JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function handleUpdateWsLoa14(id, label) {
+    setWorkstreamsLoa14(prev => {
+      const next = prev.map(w => w.id === id ? { ...w, label } : w);
+      localStorage.setItem('workstreams-loa14', JSON.stringify(next));
       return next;
     });
   }
@@ -234,10 +264,13 @@ export default function App() {
       {activeView === 'gantt' && (
         <GanttView
           {...sharedProps}
+          workstreamsLoa14={workstreamsLoa14}
           onUpsertTasks={upsertTasks}
           onDeleteTask={deleteTask}
           onOpenWsModal={() => setWsModalOpen(true)}
           onUpdateWs={handleUpdateWs}
+          onOpenWsModalLoa14={() => setWsModalLoa14Open(true)}
+          onUpdateWsLoa14={handleUpdateWsLoa14}
         />
       )}
       {activeView === 'daily' && (
@@ -266,6 +299,7 @@ export default function App() {
         editId={modalEditId}
         tasks={tasks}
         defaultWsId={modalDefaultWs}
+        workstreamsLoa14={workstreamsLoa14}
         onSave={handleSave}
         onClose={() => setModalOpen(false)}
       />
@@ -273,6 +307,11 @@ export default function App() {
         open={wsModalOpen}
         onSave={handleSaveWs}
         onClose={() => setWsModalOpen(false)}
+      />
+      <WorkstreamModal
+        open={wsModalLoa14Open}
+        onSave={handleSaveWsLoa14}
+        onClose={() => setWsModalLoa14Open(false)}
       />
 
       {/* ── AI Chat Panel ── */}

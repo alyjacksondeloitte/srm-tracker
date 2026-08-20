@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { WS, WS_LOA14, TEAM, REVIEWERS } from '../constants.js';
-
-const ALL_WS = [
-  { label: 'LOA 12', options: WS },
-  { label: 'LOA 14', options: WS_LOA14 },
-];
+import { WS, WS_LOA14 as WS_LOA14_DEFAULT, TEAM, REVIEWERS } from '../constants.js';
 import { uid, fmtShort, pd } from '../utils.js';
 import { addWeekdays, buildReviewTasks, buildSubtasks } from '../reviewChain.js';
 
@@ -20,7 +15,11 @@ const EMPTY_TASK = {
   priority: false,
 };
 
-export default function TaskModal({ open, editId, tasks, defaultWsId, onSave, onClose }) {
+export default function TaskModal({ open, editId, tasks, defaultWsId, workstreamsLoa14, onSave, onClose }) {
+  const ALL_WS = [
+    { label: 'LOA 12', options: WS },
+    { label: 'LOA 14', options: workstreamsLoa14?.length ? workstreamsLoa14 : WS_LOA14_DEFAULT },
+  ];
   const [form, setForm] = useState(EMPTY_TASK);
   const [customOwner, setCustomOwner] = useState('');
   const [showCustomOwner, setShowCustomOwner] = useState(false);
