@@ -87,7 +87,7 @@ body { font-family:'Open Sans',sans-serif; background:var(--bg); color:var(--tex
 .s-co  { background:#e6f4e6; color:#2e7d32; }
 .s-bl  { background:#fde8e8; color:var(--due-over); }
 .due-ok    { color:var(--text3); }
-.due-today { color:var(--text3); font-weight:700; }
+.due-today { color:#9b1c1c; font-weight:700; }
 .due-soon  { color:var(--due-soon); font-weight:600; }
 .due-over  { color:var(--due-over); font-weight:700; }
 .icon-btn { background:none; border:none; cursor:pointer; font-size:12px; padding:2px 5px; border-radius:3px; color:var(--text2); }
@@ -205,11 +205,11 @@ textarea.fi { min-height:52px; resize:vertical; }
 .pri-on  { color:var(--due-priority); }
 .pri-off { color:#ccc; }
 .due-display.due-ok    { color:var(--text3); }
-.due-display.due-today { color:var(--text3); font-weight:700; }
+.due-display.due-today { color:#9b1c1c; font-weight:700; }
 .due-display.due-soon  { color:var(--due-soon); font-weight:600; }
 .due-display.due-over  { color:var(--due-over); font-weight:700; }
 .due-inline.due-ok    { color:var(--text3); }
-.due-inline.due-today { color:var(--text3); font-weight:700; }
+.due-inline.due-today { color:#9b1c1c; font-weight:700; }
 .due-inline.due-soon  { color:var(--due-soon); font-weight:600; }
 .due-inline.due-over  { color:var(--due-over); font-weight:700; }
 
