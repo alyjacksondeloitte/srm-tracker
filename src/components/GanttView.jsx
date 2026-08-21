@@ -126,8 +126,7 @@ export default function GanttView({ tasks, workstreams: wsProp, workstreamsLoa14
               const wt = loaTasks.filter(t => t.ws === ws.id);
               const isSel = selWs === ws.id;
               // Tasks with a startDate span from startDate→due; tasks without only mark their due week
-              const wtSpan  = wt.filter(t => t.startDate && t.due && !t.isSubtask);
-              const wtDueOnly = wt.filter(t => !t.startDate && t.due && !t.isSubtask);
+              const wtActive = wt.filter(t => t.due && !t.isSubtask);
 
               return (
                 <tr
@@ -192,9 +191,10 @@ export default function GanttView({ tasks, workstreams: wsProp, workstreamsLoa14
                     const colTasks = wt.filter(t =>
                       t.due && t.due >= w.d && t.due < nextD && !t.isSubtask
                     );
-                    const inSpan    = wtSpan.some(t => w.d >= t.startDate && w.d <= t.due);
-                    const inDueWeek = wtDueOnly.some(t => t.due >= w.d && t.due < nextD);
-                    const showBar   = colTasks.length === 0 && (inSpan || inDueWeek);
+                    const showBar = wtActive.some(t =>
+                      (t.due >= w.d && t.due < nextD) ||
+                      (t.startDate && w.d >= t.startDate && w.d <= t.due)
+                    );
 
                     return (
                       <td key={w.d} className={isToday ? 'today-col' : ''}>
