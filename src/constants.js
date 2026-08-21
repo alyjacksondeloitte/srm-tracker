@@ -23,7 +23,8 @@ export const WS_LOA14 = [
   { id:'loa14-trends',          label:'2027 External Trends Report',                      color:'#66BB6A' },
   { id:'loa14-pov',             label:'Risk POV',                                         color:'#EF5350' },
   { id:'loa14-council',         label:'Monthly SRM Council Meeting Materials',            color:'#AB47BC' },
-  { id:'loa14-adhoc',          label:'Ad Hoc',                                           color:'#9E9E9E' },
+  { id:'loa14-ai-gov',         label:'AI Strategy & Governance',                         color:'#5C6BC0' },
+  { id:'loa14-adhoc',         label:'Ad Hoc',                                            color:'#9E9E9E' },
 ];
 
 export const TEAM = ['Alyssa','Asma','Stewart','Sam','Bridget','Lily','Alex','Dmitriy'];
