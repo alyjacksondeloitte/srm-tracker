@@ -290,7 +290,7 @@ export default function App() {
         />
       )}
       {activeView === 'priorities' && (
-        <PrioritiesView {...sharedProps} />
+        <PrioritiesView {...sharedProps} workstreamsLoa14={workstreamsLoa14} />
       )}
 
       {/* ── Modals ── */}

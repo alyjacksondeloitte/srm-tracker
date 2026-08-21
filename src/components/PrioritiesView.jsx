@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { WS, TEAM } from '../constants.js';
+import { WS, WS_LOA14, TEAM } from '../constants.js';
+
+const ALL_WS = [...WS, ...WS_LOA14];
 import { sortByDue, dueCls, fmtShort, autoSizeTextareas } from '../utils.js';
 
 const STATUS_LABELS = {
@@ -15,7 +17,8 @@ function Pill({ status }) {
   return <span className={`pill ${st.cls}`}>{st.label}</span>;
 }
 
-export default function PrioritiesView({ tasks, onInline, onOpenAdd, onOpenEdit }) {
+export default function PrioritiesView({ tasks, workstreams, workstreamsLoa14, onInline, onOpenAdd, onOpenEdit }) {
+  const allWs = [...(workstreams?.length ? workstreams : WS), ...(workstreamsLoa14?.length ? workstreamsLoa14 : WS_LOA14)];
   const [hideComplete, setHideComplete] = useState(false);
   const tableRef = useRef(null);
 
@@ -57,7 +60,7 @@ export default function PrioritiesView({ tasks, onInline, onOpenAdd, onOpenEdit 
               </tr>
             </thead>
             <tbody>
-              {flagged.map(t => <PriorityRow key={t.id} task={t} onInline={onInline} onOpenEdit={onOpenEdit} />)}
+              {flagged.map(t => <PriorityRow key={t.id} task={t} allWs={allWs} onInline={onInline} onOpenEdit={onOpenEdit} />)}
             </tbody>
           </table>
         )}
@@ -66,8 +69,8 @@ export default function PrioritiesView({ tasks, onInline, onOpenAdd, onOpenEdit 
   );
 }
 
-function PriorityRow({ task: t, onInline, onOpenEdit }) {
-  const ws = WS.find(w => w.id === t.ws);
+function PriorityRow({ task: t, allWs, onInline, onOpenEdit }) {
+  const ws = allWs.find(w => w.id === t.ws);
   const done = t.status === 'complete';
   const dueCl = done ? 'due-ok' : dueCls(t.due);
   const [editing, setEditing] = useState(false);
