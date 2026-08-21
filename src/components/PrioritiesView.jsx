@@ -17,18 +17,43 @@ function Pill({ status }) {
   return <span className={`pill ${st.cls}`}>{st.label}</span>;
 }
 
+const SORTABLE = ['Task', 'Workstream', 'Owner', 'Due'];
+
+function sortFn(col, dir, allWs) {
+  return (a, b) => {
+    let va, vb;
+    if (col === 'Task')        { va = (a.name || '').toLowerCase();                          vb = (b.name || '').toLowerCase(); }
+    if (col === 'Workstream')  { va = (allWs.find(w => w.id === a.ws)?.label || a.ws).toLowerCase(); vb = (allWs.find(w => w.id === b.ws)?.label || b.ws).toLowerCase(); }
+    if (col === 'Owner')       { va = (a.owner || '').toLowerCase();                         vb = (b.owner || '').toLowerCase(); }
+    if (col === 'Due')         { va = a.due || '9999'; vb = b.due || '9999'; }
+    if (va < vb) return dir === 'asc' ? -1 : 1;
+    if (va > vb) return dir === 'asc' ? 1 : -1;
+    return 0;
+  };
+}
+
 export default function PrioritiesView({ tasks, workstreams, workstreamsLoa14, onInline, onOpenAdd, onOpenEdit }) {
   const allWs = [...(workstreams?.length ? workstreams : WS), ...(workstreamsLoa14?.length ? workstreamsLoa14 : WS_LOA14)];
   const [hideComplete, setHideComplete] = useState(false);
+  const [sortCol, setSortCol] = useState('Due');
+  const [sortDir, setSortDir] = useState('asc');
   const tableRef = useRef(null);
 
   useEffect(() => {
     if (tableRef.current) autoSizeTextareas(tableRef.current);
   });
 
+  function handleSort(col) {
+    if (!SORTABLE.includes(col)) return;
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortCol(col); setSortDir('asc'); }
+  }
+
   let flagged = tasks.filter(t => t.priority === true && !t.isReview && !t.isSubtask);
   if (hideComplete) flagged = flagged.filter(t => t.status !== 'complete');
-  flagged = sortByDue(flagged);
+  flagged = [...flagged].sort(sortFn(sortCol, sortDir, allWs));
+
+  const COLS = ['Task', 'Workstream', 'Owner', 'Notes', 'Due', 'Done', 'Actions'];
 
   return (
     <div className="team-wrap">
@@ -52,11 +77,35 @@ export default function PrioritiesView({ tasks, workstreams, workstreamsLoa14, o
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                {['Task', 'Workstream', 'Owner', 'Notes', 'Due', 'Done', 'Actions'].map(h => (
-                  <th key={h} style={{ textAlign: h === 'Done' || h === 'Actions' ? 'center' : 'left', padding: '8px 10px', fontSize: 11, color: 'var(--text3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px' }}>
-                    {h}
-                  </th>
-                ))}
+                {COLS.map(h => {
+                  const sortable = SORTABLE.includes(h);
+                  const active = sortCol === h;
+                  return (
+                    <th
+                      key={h}
+                      onClick={() => handleSort(h)}
+                      style={{
+                        textAlign: h === 'Done' || h === 'Actions' ? 'center' : 'left',
+                        padding: '8px 10px',
+                        fontSize: 11,
+                        color: active ? 'var(--key-navy)' : 'var(--text3)',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '.5px',
+                        cursor: sortable ? 'pointer' : 'default',
+                        userSelect: 'none',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {h}
+                      {sortable && (
+                        <span style={{ marginLeft: 4, opacity: active ? 1 : 0.3, fontSize: 10 }}>
+                          {active ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                        </span>
+                      )}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
