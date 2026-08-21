@@ -18,7 +18,7 @@ function loadOrder(workstreams, storageKey) {
   return workstreams;
 }
 
-export default function GanttView({ tasks, workstreams: wsProp, workstreamsLoa14: wsPropLoa14, onInline, onUpsertTasks, onDeleteTask, onOpenAdd, onOpenEdit, onOpenWsModal, onUpdateWs, onOpenWsModalLoa14, onUpdateWsLoa14 }) {
+export default function GanttView({ tasks, workstreams: wsProp, workstreamsLoa14: wsPropLoa14, onInline, onUpsertTasks, onDeleteTask, onOpenAdd, onOpenEdit, onOpenWsModal, onUpdateWs, onOpenWsModalLoa14, onUpdateWsLoa14, onDeleteWs, onDeleteWsLoa14 }) {
   const [loa, setLoa] = useState('loa14');
   const ws12Source = wsProp?.length ? wsProp : WS;
   const ws14Source = wsPropLoa14?.length ? wsPropLoa14 : WS_LOA14;
@@ -168,6 +168,19 @@ export default function GanttView({ tasks, workstreams: wsProp, workstreamsLoa14
                           }}
                           onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') { e.target.value = ws.label; e.target.blur(); } }}
                         />
+                        {wt.length === 0 && (
+                          <button
+                            title="Delete empty workstream"
+                            onClick={e => {
+                              e.stopPropagation();
+                              if (window.confirm(`Delete workstream "${ws.label}"?`)) {
+                                if (isLoa12 && onDeleteWs) onDeleteWs(ws.id);
+                                else if (!isLoa12 && onDeleteWsLoa14) onDeleteWsLoa14(ws.id);
+                              }
+                            }}
+                            style={{ fontSize: 10, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', lineHeight: 1, opacity: 0.5 }}
+                          >✕</button>
+                        )}
                         <div className="ws-cnt">{wt.filter(t => t.status !== 'complete').length} remaining</div>
                       </div>
                     </div>

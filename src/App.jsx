@@ -126,6 +126,22 @@ export default function App() {
     });
   }
 
+  function handleDeleteWs(id) {
+    setWorkstreams(prev => {
+      const next = prev.filter(w => w.id !== id);
+      localStorage.setItem('workstreams', JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function handleDeleteWsLoa14(id) {
+    setWorkstreamsLoa14(prev => {
+      const next = prev.filter(w => w.id !== id);
+      localStorage.setItem('workstreams-loa14', JSON.stringify(next));
+      return next;
+    });
+  }
+
   // ── Export / Import ───────────────────────────────────────────
   function handleExport() {
     const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
@@ -271,6 +287,8 @@ export default function App() {
           onUpdateWs={handleUpdateWs}
           onOpenWsModalLoa14={() => setWsModalLoa14Open(true)}
           onUpdateWsLoa14={handleUpdateWsLoa14}
+          onDeleteWs={handleDeleteWs}
+          onDeleteWsLoa14={handleDeleteWsLoa14}
         />
       )}
       {activeView === 'daily' && (
