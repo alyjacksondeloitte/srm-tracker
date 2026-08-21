@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { WS, TEAM, REVIEWERS } from '../constants.js';
+import { WS, WS_LOA14, TEAM, REVIEWERS } from '../constants.js';
+const ALL_WS = [...WS, ...WS_LOA14];
 import { todayDate, pd, fmtShort, dueCls } from '../utils.js';
 
 const STATUS_LABELS = {
@@ -164,7 +165,7 @@ export default function TeamView({ tasks, ptoRecords, onAddPTO, onRemovePTO, isO
 }
 
 function OwnedRow({ task: t, person, isOnPTO, getPTORecord }) {
-  const ws = WS.find(w => w.id === t.ws);
+  const ws = ALL_WS.find(w => w.id === t.ws);
   const conflict = t.due && isOnPTO(person, t.due);
   const ptoRec = conflict ? getPTORecord(person, t.due) : null;
   return (
@@ -186,7 +187,7 @@ function OwnedRow({ task: t, person, isOnPTO, getPTORecord }) {
 
 function SubtaskRow({ task: s, tasks, person, isOnPTO, getPTORecord }) {
   const parentTask = tasks.find(p => p.id === s.parentId);
-  const ws = WS.find(w => w.id === s.ws);
+  const ws = ALL_WS.find(w => w.id === s.ws);
   const conflict = s.due && isOnPTO(person, s.due);
   const ptoRec = conflict ? getPTORecord(person, s.due) : null;
   return (

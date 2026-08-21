@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { WS } from '../constants.js';
+import { WS, WS_LOA14 } from '../constants.js';
+const ALL_WS = [...WS, ...WS_LOA14];
 import { todayDate, pd, dueCls } from '../utils.js';
 
 const STATUS_LABELS = {
@@ -79,7 +80,7 @@ export default function DailyView({ tasks, onOpenAdd }) {
               {dt.length === 0
                 ? <div className="no-task">No tasks due</div>
                 : dt.map(t => {
-                    const ws = WS.find(w => w.id === t.ws);
+                    const ws = ALL_WS.find(w => w.id === t.ws);
                     if (t.isReview) {
                       return (
                         <div key={t.id} className="dtask" style={{ background: '#f0f7ff', borderLeft: '3px solid var(--swp-blue)', paddingLeft: 11 }}>
